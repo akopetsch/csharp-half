@@ -8,16 +8,17 @@ namespace System
     /// </summary>
     /// <remarks>
     /// References:
-    ///     - Fast Half Float Conversions, Jeroen van der Zijp, link: http://www.fox-toolkit.org/ftp/fasthalffloatconversion.pdf
+    ///     - Fast Half Float Conversions, Jeroen van der Zijp
+    ///       http://www.fox-toolkit.org/ftp/fasthalffloatconversion.pdf
     /// </remarks>
     [ComVisible(false)]
     internal static class HalfHelper
     {
-        private static uint[] mantissaTable = GenerateMantissaTable();
-        private static uint[] exponentTable = GenerateExponentTable();
-        private static ushort[] offsetTable = GenerateOffsetTable();
-        private static ushort[] baseTable = GenerateBaseTable();
-        private static sbyte[] shiftTable = GenerateShiftTable();
+        private static readonly uint[] mantissaTable = GenerateMantissaTable();
+        private static readonly uint[] exponentTable = GenerateExponentTable();
+        private static readonly ushort[] offsetTable = GenerateOffsetTable();
+        private static readonly ushort[] baseTable = GenerateBaseTable();
+        private static readonly sbyte[] shiftTable = GenerateShiftTable();
 
         // Transforms the subnormal representation to a normalized one. 
         private static uint ConvertMantissa(int i)
@@ -51,6 +52,7 @@ namespace System
 
             return mantissaTable;
         }
+
         private static uint[] GenerateExponentTable()
         {
             uint[] exponentTable = new uint[64];
@@ -69,6 +71,7 @@ namespace System
 
             return exponentTable;
         }
+
         private static ushort[] GenerateOffsetTable()
         {
             ushort[] offsetTable = new ushort[64];
@@ -85,6 +88,7 @@ namespace System
 
             return offsetTable;
         }
+
         private static ushort[] GenerateBaseTable()
         {
             ushort[] baseTable = new ushort[512];
@@ -120,6 +124,7 @@ namespace System
 
             return baseTable;
         }
+
         private static sbyte[] GenerateShiftTable()
         {
             sbyte[] shiftTable = new sbyte[512];
@@ -161,38 +166,19 @@ namespace System
             uint result = mantissaTable[offsetTable[half.value >> 10] + (half.value & 0x3ff)] + exponentTable[half.value >> 10];
             return *((float*)&result);
         }
+
         public static unsafe Half SingleToHalf(float single)
         {
             uint value = *((uint*)&single);
-
             ushort result = (ushort)(baseTable[(value >> 23) & 0x1ff] + ((value & 0x007fffff) >> shiftTable[value >> 23]));
             return Half.ToHalf(result);
         }
 
-        public static Half Negate(Half half)
-        {
-            return Half.ToHalf((ushort)(half.value ^ 0x8000));
-        }
-        public static Half Abs(Half half)
-        {
-            return Half.ToHalf((ushort)(half.value & 0x7fff));
-        }
-
-        public static bool IsNaN(Half half)
-        {
-            return ((half.value & 0x7fff) > 0x7c00);
-        }
-        public static bool IsInfinity(Half half)
-        {
-            return ((half.value & 0x7fff) == 0x7c00);
-        }        
-        public static bool IsPositiveInfinity(Half half)
-        {
-            return (half.value == 0x7c00);
-        }
-        public static bool IsNegativeInfinity(Half half)
-        {
-            return (half.value == 0xfc00);
-        }
+        public static Half Negate(Half half) => Half.ToHalf((ushort)(half.value ^ 0x8000));
+        public static Half Abs(Half half) => Half.ToHalf((ushort)(half.value & 0x7fff));
+        public static bool IsNaN(Half half) => (half.value & 0x7fff) > 0x7c00;
+        public static bool IsInfinity(Half half) => (half.value & 0x7fff) == 0x7c00;
+        public static bool IsPositiveInfinity(Half half) => (half.value == 0x7c00);
+        public static bool IsNegativeInfinity(Half half) => (half.value == 0xfc00);
     }
 }
